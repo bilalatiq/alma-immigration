@@ -1,115 +1,228 @@
-import Image from "next/image";
-import { Geist, Geist_Mono } from "next/font/google";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import { useState } from 'react';
 
 export default function Home() {
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    country: '',
+    linkedin: '',
+    visas: [],
+    resume: null,
+    additionalInfo: '',
+  });
+  const [showPopup, setShowPopup] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value, type, files, checked } = e.target;
+    if (type === 'file') {
+      setFormData({ ...formData, [name]: files[0] });
+    } else if (type === 'checkbox') {
+      const updatedVisas = checked
+        ? [...formData.visas, value]
+        : formData.visas.filter((visa) => visa !== value);
+      setFormData({ ...formData, visas: updatedVisas });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (formData.visas.length === 0) {
+      alert('Please select at least one visa category.');
+      return;
+    }
+    const formDataToSend = new FormData();
+    Object.keys(formData).forEach((key) => {
+      if (key === 'visas') {
+        formData[key].forEach((visa) => formDataToSend.append('visas', visa));
+      } else {
+        formDataToSend.append(key, formData[key]);
+      }
+    });
+
+    const response = await fetch('/api/submit-lead', {
+      method: 'POST',
+      body: formDataToSend,
+    });
+    const result = await response.json();
+    if (result.success) {
+      setShowPopup(true);
+      setFormData({
+        firstName: '',
+        lastName: '',
+        email: '',
+        country: '',
+        linkedin: '',
+        visas: [],
+        resume: null,
+        additionalInfo: '',
+      });
+    }
+  };
+
+  const closePopup = () => {
+    setShowPopup(false);
+    window.location.href = '/';
+  };
+
   return (
-    <div
-      className={`${geistSans.className} ${geistMono.className} grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]`}
-    >
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/pages/index.js
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="min-h-screen">
+      {/* Banner Section */}
+      <div>
+        <div className="text-center">
+          <img src="/banner.png" alt="almá logo" className="h-120 w-full" />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
+
+      {/* Main Form Section */}
+      <div className="bg-[#ffffff]">
+        <div className="max-w-md mx-auto">
+          <form onSubmit={handleSubmit} className="bg-white p-6 space-y-6">
+            {/* Section 1: Want to understand your visa options? */}
+            <div className="text-center">
+              <div className="flex items-center justify-center mb-4">
+                <span className="text-purple-400 text-2xl">📄</span>
+              </div>
+              <p className="text-lg font-semibold text-gray-800">
+                Want to understand your visa options?
+              </p>
+              <p className="text-gray-600 mt-2">
+                Submit the form below and our team of experienced attorneys will review your information and send a
+                preliminary assessment of your case based on your goals.
+              </p>
+            </div>
+
+            {/* Form Fields */}
+            <input
+              type="text"
+              name="firstName"
+              value={formData.firstName}
+              onChange={handleChange}
+              placeholder="First Name"
+              required
+              className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-300"
+            />
+            <input
+              type="text"
+              name="lastName"
+              value={formData.lastName}
+              onChange={handleChange}
+              placeholder="Last Name"
+              required
+              className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-300"
+            />
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="Email"
+              required
+              className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-300"
+            />
+            <select
+              name="country"
+              value={formData.country}
+              onChange={handleChange}
+              required
+              className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-300"
+            >
+              <option value="" disabled>
+                Country of Citizenship
+              </option>
+              <option value="USA">USA</option>
+              <option value="Canada">Canada</option>
+              <option value="Mexico">Mexico</option>
+              {/* Add more countries as needed */}
+            </select>
+            <input
+              type="text"
+              name="linkedin"
+              value={formData.linkedin}
+              onChange={handleChange}
+              placeholder="LinkedIn / Personal Website URL"
+              className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-300"
+            />
+
+            {/* Section 2: Visa categories of interest? */}
+            <div className="text-center">
+              <div className="flex items-center justify-center mb-4">
+                <span className="text-purple-400 text-2xl">🎲</span>
+              </div>
+              <p className="text-lg font-semibold text-gray-800">Visa categories of interest?</p>
+              <div className="space-y-2 mt-4">
+                {['O-1', 'EB-1A', 'EB-2 NIW', "I don't know"].map((visa) => (
+                  <label key={visa} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      name="visas"
+                      value={visa}
+                      checked={formData.visas.includes(visa)}
+                      onChange={handleChange}
+                      className="mr-2"
+                    />
+                    {visa}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Resume Upload */}
+            <input
+              type="file"
+              name="resume"
+              onChange={handleChange}
+              className="w-full p-3 border rounded-md focus:outline-none"
+            />
+
+            {/* Section 3: How can we help you? */}
+            <div className="text-center">
+              <div className="flex items-center justify-center mb-4">
+                <span className="text-purple-400 text-2xl">❤️</span>
+              </div>
+              <p className="text-lg font-semibold text-gray-800">How can we help you?</p>
+              <textarea
+                name="additionalInfo"
+                value={formData.additionalInfo}
+                onChange={handleChange}
+                placeholder="What is your current status and when does it expire? What is your past immigration history? Are you looking for long-term permanent residency or short-term employment visa or both? Are there any timeline considerations? Tell us more!"
+                className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-300 h-32"
+              />
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              className="bg-black text-white py-2 px-6 rounded-md hover:bg-gray-800 transition-colors w-full"
+            >
+              Submit
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {/* Popup on Successful Submission */}
+      {showPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg shadow-md text-center max-w-md">
+            <div className="flex items-center justify-center mb-4">
+              <span className="text-purple-400 text-2xl">📄</span>
+            </div>
+            <p className="text-lg font-semibold text-gray-800 mb-4">Thank You</p>
+            <p className="text-gray-600 mb-4">
+              Your information was submitted to our team of immigration attorneys. Expect an email from hello@alma.ai.
+            </p>
+            <button
+              onClick={closePopup}
+              className="bg-black text-white py-2 px-6 rounded-md hover:bg-gray-800 transition-colors"
+            >
+              Go Back to Homepage
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
